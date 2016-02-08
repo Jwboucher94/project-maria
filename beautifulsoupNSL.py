@@ -8,15 +8,15 @@ import os.path
 import bs4 as BeautifulSoup
 import urllib.request
 
-if not os.path.isfile("cache/fooobe.com.html"):
+if not os.path.isfile("cache/networksciencelab.com.html"):
     print("Attempting to cashing the data...")
     if not os.path.isdir("cache"):
         os.mkdir("cache")
     data = urllib.request.urlopen("http://networksciencelab.com/").read().decode("utf-8")
     data = data.replace(u'\xa0', u' ')
-    outfile = open("cache/fooobe.com.html", "w")
+    outfile = open("cache/networksciencelab.com.html", "w")
     outfile.write(data)
     outfile.close()
 
-with open("cache/fooobe.com.html") as infile:
-    soup = BeautifulSoup.BeautifulSoup(infile)
+with open("cache/networksciencelab.com.html") as infile:
+    soup = BeautifulSoup.BeautifulSoup(infile, 'lxml')
