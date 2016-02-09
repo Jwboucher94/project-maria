@@ -118,8 +118,11 @@ while dcounter < dlen:
                 if ploc > 0:
                     if len(psoup.find_all('p')) > 1:
                         pdegree = psoup.find_all('p')[1].get_text().split('\n ')
-                    else:
+                    elif len(psoup.find_all('p')) == 1:
                         pdegree = psoup.find_all('p')[0].get_text().split('\n ')
+                    else:
+                        pdegree = psoup.find_all('body')[0].get_text().split('\n')
+                        pdegree = pdegree[1:]
                 countli = 0
             lenpdegree = len(pdegree)
             pvar = 0
