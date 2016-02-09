@@ -80,10 +80,12 @@ while dcounter < dlen:
                 profhref = profhref.split('http://www.suffolk.edu')[1] #get the current website
                         #About to get full of bullshit code right here...
             pdata = urllib.request.urlopen("http://www.suffolk.edu" + profhref).read().decode("utf-8")
+                #Just in case of errors in translation. Most were needed on original site, might as well incorporate.
             pdata = pdata.replace(u'\u2013', u'-')
             pdata = pdata.replace(u'\xa0', u' ')
             pdata = pdata.replace(u'\u2019', u"\'")
                 #set current web address to pdata
+                #All of these are for the single case instances where it's not following a standard design
             if pdata.find('3>Education') > 0:
                 ploc = pdata.find('3>Education')
                 pdata2 = pdata[ploc:]
@@ -97,24 +99,28 @@ while dcounter < dlen:
                 ploc = pdata.find('Education</strong>')
                 pdata2 = pdata[ploc:]
             #set temp location to shorten soup            
-                        
-            psoup = BeautifulSoup.BeautifulSoup(pdata[ploc:ploc+250], 'lxml')
+                
+                #temporary psoup size, reduced in next steps in case of lists that follow education                        
+            psoup = BeautifulSoup.BeautifulSoup(pdata[ploc:ploc+250], 'lxml') 
+                #if there's a header following education, location 2 is before that
             if len(psoup.find_all('h3')) > 0:
                 ploc2 = pdata2.find('<h3')
-            else:
+            else: #if no header following, use the last ul as a point set location to after that
                 if len(psoup.find_all('ul')) > 0:
                     ploc2 = pdata2.find('/ul>')+5
-                else:
+                else: #if no ul because paragraph form, do the same thing but with paragraph tag
                     ploc2 = pdata2.find('/p>')+4
+                    #overwrite psoup to new end location
             pdata2 = pdata2[:ploc2]
             psoup = BeautifulSoup.BeautifulSoup(pdata2, 'lxml')
-                #temp beautifulSoup
+                #determine if psoup is list form or paragraph form
             if not len(psoup.find_all('li')) == 0:
                 pdegree = psoup.find_all('li')
                 countli = 1
             else:
                 if ploc == -1:
                     pdegree = psoup
+                    #to cover instances where p is somewhere else or not used
                 if ploc > 0:
                     if len(psoup.find_all('p')) > 1:
                         pdegree = psoup.find_all('p')[1].get_text().split('\n ')
@@ -128,42 +134,52 @@ while dcounter < dlen:
             pvar = 0
                     
             while pvar < lenpdegree:
+                #if in list format
                 if countli == 1:
                     pname = modefind.find_all('ul')[dcounter].find_all('li')[pcounter].get_text().split(', ')
+                    #set name and rank, and clear previous degree and institution to prepare for new
                     plist[0] = pname[0]
                     plist[1] = pname[1]
                     plist[2] = ''
                     plist[3] = ''
+                    #checking current li for the following. will skip if it can't find it's trigger
                     findli('PhD')
                     findli('MS')
                     findli('BS')
+                    #only use this mode if a findli commands worked
                     if not plist[2] == '':
                         with open(teachersCsv, 'a', newline='') as csvfile:
                         #'a' to append instead of overwrite the first line each time
                             writer = csv.writer(csvfile)
                             writer.writerow(plist)
                         rowcount += 1
+                    #will only be used if it's the last li and there haven't been any additions
                     if plist[2] == '' and (pvar+1) == lenpdegree and rowcount == 0:
                         with open(teachersCsv, 'a', newline='') as csvfile:
                         #'a' to append instead of overwrite the first line each time
                             writer = csv.writer(csvfile)
                             writer.writerow(plist)
                     pvar += 1
+                #if in paragraph form or break form
                 if countli == 0:
                     pname = modefind.find_all('ul')[dcounter].find_all('li')[pcounter].get_text().split(', ')
+                    #set name and rank, and clear previous degree and institution to prepare for new
                     plist[0] = pname[0]
                     plist[1] = pname[1]
                     plist[2] = ''
                     plist[3] = ''
+                    #check current paragraph for following. will skip if can't find it's trigger
                     findp('PhD')
                     findp('MS')
                     findp('BS')
+                    #will only be used if a findp command worked
                     if not plist[2] == '':
                         with open(teachersCsv, 'a', newline='') as csvfile:
                         #'a' to append instead of overwrite the first line each time
                             writer = csv.writer(csvfile)
                             writer.writerow(plist)
                         rowcount += 1
+                    #will only be used if no commands worked and last paragraph item
                     if plist[2] == '' and (pvar+1) == lenpdegree:
                         with open(teachersCsv, 'a', newline='') as csvfile:
                         #'a' to append instead of overwrite the first line each time
@@ -171,9 +187,13 @@ while dcounter < dlen:
                             writer.writerow(plist)
                     pvar += 1
         else:
+            #if there was no education information
             pname = modefind.find_all('ul')[dcounter].find_all('li')[pcounter].get_text().split(', ')
+            #setting name and rank. plist 2 and 3 are empty
             plist[0] = pname[0]
             plist[1] = pname[1]
+            plist[2] = ''
+            plist[3] = ''
             with open(teachersCsv, 'a', newline='') as csvfile:
                             #'a' to append instead of overwrite the first line each time
                 writer = csv.writer(csvfile)
